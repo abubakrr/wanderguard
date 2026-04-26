@@ -30,6 +30,7 @@ INSTALLED_APPS = [
     'ml_pipeline',
     'alerts',
     'django_celery_results',
+    'drf_spectacular',
 ]
 
 MIDDLEWARE = [
@@ -82,6 +83,26 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'WanderGuard API',
+    'DESCRIPTION': (
+        'AI-driven wandering detection backend for Alzheimer\'s patients. '
+        'Authenticate with JWT: POST /api/auth/login/ → copy access token → '
+        'click Authorize → paste as "Bearer <token>".'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'TAGS': [
+        {'name': 'auth',      'description': 'Registration, login, JWT refresh, user info'},
+        {'name': 'patients',  'description': 'Patient linking and listing'},
+        {'name': 'tracking',  'description': 'GPS ingestion, history, heatmap'},
+        {'name': 'alerts',    'description': 'Alerts, SOS, risk history'},
+        {'name': 'ml',        'description': 'Learned places'},
+    ],
 }
 
 SIMPLE_JWT = {

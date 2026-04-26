@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import fields, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -32,6 +33,11 @@ def _assert_owns_patient(caregiver, patient_id):
 
 # ── Device token ───────────────────────────────────────────────────────────────
 
+@extend_schema(
+    tags=['alerts'],
+    request=inline_serializer('DeviceToken', fields={'token': fields.CharField(), 'device_type': fields.CharField()}),
+    responses={200: inline_serializer('DetailResponse', fields={'detail': fields.CharField()})},
+)
 class RegisterDeviceTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -46,6 +52,7 @@ class RegisterDeviceTokenView(APIView):
 
 # ── Patient overview ───────────────────────────────────────────────────────────
 
+@extend_schema(tags=['patients'])
 class PatientOverviewView(APIView):
     """Quick-glance card: name, latest location, current risk, last update."""
     permission_classes = [IsAuthenticated]
@@ -70,6 +77,7 @@ class PatientOverviewView(APIView):
 
 # ── Risk history ───────────────────────────────────────────────────────────────
 
+@extend_schema(tags=['alerts'], responses={200: RiskScoreSerializer(many=True)})
 class RiskHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -94,6 +102,7 @@ class RiskHistoryView(APIView):
 
 # ── Alerts ─────────────────────────────────────────────────────────────────────
 
+@extend_schema(tags=['alerts'], responses={200: AlertSerializer(many=True)})
 class AlertListView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -111,6 +120,7 @@ class AlertListView(APIView):
         return paginator.get_paginated_response(AlertSerializer(page, many=True).data)
 
 
+@extend_schema(tags=['alerts'], responses={200: inline_serializer('UnreadCount', fields={'unread': fields.IntegerField()})})
 class AlertUnreadCountView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -119,6 +129,7 @@ class AlertUnreadCountView(APIView):
         return Response({'unread': count})
 
 
+@extend_schema(tags=['alerts'], responses={200: inline_serializer('ResolveResponse', fields={'detail': fields.CharField()})})
 class AlertResolveView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -132,6 +143,7 @@ class AlertResolveView(APIView):
 
 # ── Heatmap ────────────────────────────────────────────────────────────────────
 
+@extend_schema(tags=['tracking'])
 class HeatmapView(APIView):
     """Returns lat/lng/weight for heatmap visualisation."""
     permission_classes = [IsAuthenticated]
@@ -156,6 +168,7 @@ class HeatmapView(APIView):
 
 # ── Learned places ─────────────────────────────────────────────────────────────
 
+@extend_schema(tags=['ml'])
 class LearnedPlacesView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -185,6 +198,11 @@ class LearnedPlacesView(APIView):
 
 # ── SOS alert ─────────────────────────────────────────────────────────────────
 
+@extend_schema(
+    tags=['alerts'],
+    request=inline_serializer('SOSRequest', fields={'lat': fields.FloatField(), 'lng': fields.FloatField()}),
+    responses={201: inline_serializer('SOSResponse', fields={'detail': fields.CharField()})},
+)
 class SOSAlertView(APIView):
     """Patient triggers an immediate CRITICAL SOS alert."""
     permission_classes = [IsAuthenticated]

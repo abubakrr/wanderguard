@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
-from rest_framework import generics, status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import fields, generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,6 +17,7 @@ from .serializers import (
 User = get_user_model()
 
 
+@extend_schema(tags=['auth'])
 class RegisterView(generics.CreateAPIView):
     permission_classes = [AllowAny]
     serializer_class = RegisterSerializer
@@ -35,6 +37,7 @@ class RegisterView(generics.CreateAPIView):
         )
 
 
+@extend_schema(tags=['auth'], responses={200: UserSerializer})
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -42,9 +45,13 @@ class MeView(APIView):
         return Response(UserSerializer(request.user).data)
 
 
+@extend_schema(
+    tags=['patients'],
+    request=LinkPatientSerializer,
+    responses={200: inline_serializer('LinkResponse', fields={'detail': fields.CharField()})},
+)
 class LinkPatientView(APIView):
     """Caregiver links themselves to a patient via the patient's link_code."""
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -67,9 +74,9 @@ class LinkPatientView(APIView):
         return Response({'detail': f'Linked to patient {patient.username}.'})
 
 
+@extend_schema(tags=['patients'], responses={200: PatientProfileSerializer(many=True)})
 class MyPatientsView(APIView):
     """Returns all patients linked to the authenticated caregiver."""
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request):

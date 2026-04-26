@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
-from rest_framework import status
+from drf_spectacular.utils import extend_schema, inline_serializer
+from rest_framework import fields, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -14,9 +15,9 @@ from .serializers import BatchLocationSerializer, LocationPointSerializer
 User = get_user_model()
 
 
+@extend_schema(tags=['tracking'], request=LocationPointSerializer, responses={201: LocationPointSerializer})
 class LocationCreateView(APIView):
     """Patient app posts a single GPS point."""
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -26,9 +27,13 @@ class LocationCreateView(APIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
+@extend_schema(
+    tags=['tracking'],
+    request=BatchLocationSerializer,
+    responses={201: inline_serializer('BatchSaved', fields={'saved': fields.IntegerField()})},
+)
 class LocationBatchView(APIView):
     """Patient app posts a batch of GPS points (offline sync)."""
-
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -49,7 +54,6 @@ class LocationBatchView(APIView):
 
 
 def _assert_caregiver_access(caregiver, patient_id):
-    """Returns patient User if caregiver is linked, else raises 403."""
     patient = get_object_or_404(User, pk=patient_id, role='patient')
     linked = PatientProfile.objects.filter(user=patient, caregiver=caregiver).exists()
     if not linked:
@@ -57,26 +61,24 @@ def _assert_caregiver_access(caregiver, patient_id):
     return patient, None
 
 
+@extend_schema(tags=['tracking'], responses={200: LocationPointSerializer})
 class LatestLocationView(APIView):
     """Returns the most recent GPS point for a patient."""
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, patient_id):
         patient, err = _assert_caregiver_access(request.user, patient_id)
         if err:
             return err
-
         point = LocationPoint.objects.filter(patient=patient).first()
         if not point:
             return Response({'detail': 'No location data yet.'}, status=404)
-
         return Response(LocationPointSerializer(point).data)
 
 
+@extend_schema(tags=['tracking'], responses={200: LocationPointSerializer(many=True)})
 class LocationHistoryView(APIView):
     """Returns paginated location history for a patient, with optional date range."""
-
     permission_classes = [IsAuthenticated]
 
     def get(self, request, patient_id):
@@ -85,7 +87,6 @@ class LocationHistoryView(APIView):
             return err
 
         qs = LocationPoint.objects.filter(patient=patient)
-
         from_ts = request.query_params.get('from')
         to_ts = request.query_params.get('to')
         if from_ts:
@@ -96,5 +97,4 @@ class LocationHistoryView(APIView):
         paginator = PageNumberPagination()
         paginator.page_size = 200
         page = paginator.paginate_queryset(qs, request)
-        serializer = LocationPointSerializer(page, many=True)
-        return paginator.get_paginated_response(serializer.data)
+        return paginator.get_paginated_response(LocationPointSerializer(page, many=True).data)

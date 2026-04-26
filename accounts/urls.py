@@ -1,7 +1,12 @@
 from django.urls import path
+from drf_spectacular.utils import extend_schema
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import LinkPatientView, MeView, MyPatientsView, RegisterView
+
+# Tag the simplejwt views so they appear under 'auth' in Swagger
+TokenObtainPairView  = extend_schema(tags=['auth'])(TokenObtainPairView)
+TokenRefreshView     = extend_schema(tags=['auth'])(TokenRefreshView)
 
 urlpatterns = [
     path('auth/register/', RegisterView.as_view(), name='register'),
