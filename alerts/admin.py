@@ -1,6 +1,6 @@
 from django.contrib.gis import admin
 
-from .models import Alert, RiskScore
+from .models import Alert, DeviceToken, RiskScore
 
 
 @admin.register(RiskScore)
@@ -16,3 +16,9 @@ class AlertAdmin(admin.GISModelAdmin):
     list_display = ['patient', 'caregiver', 'alert_type', 'is_read', 'is_resolved', 'created_at']
     list_filter = ['alert_type', 'is_read', 'is_resolved', 'patient']
     ordering = ['-created_at']
+
+
+@admin.register(DeviceToken)
+class DeviceTokenAdmin(admin.ModelAdmin):
+    list_display = ['user', 'device_type', 'is_active', 'updated_at']
+    list_filter = ['device_type', 'is_active']

@@ -65,3 +65,18 @@ class Alert(models.Model):
 
     def __str__(self):
         return f'Alert({self.patient.username} → {self.caregiver.username}, {self.alert_type})'
+
+
+class DeviceToken(models.Model):
+    DEVICE_TYPES = [('android', 'Android'), ('ios', 'iOS')]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='device_tokens'
+    )
+    token = models.CharField(max_length=255, unique=True)
+    device_type = models.CharField(max_length=10, choices=DEVICE_TYPES)
+    is_active = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'DeviceToken({self.user.username}, {self.device_type})'

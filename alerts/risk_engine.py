@@ -125,7 +125,7 @@ def _create_alert(patient, point, risk):
         f"Distance from home: {int(risk.distance_factor * 2000)}m."
     )
 
-    Alert.objects.create(
+    alert = Alert.objects.create(
         patient=patient,
         caregiver=profile.caregiver,
         risk_score=risk,
@@ -133,6 +133,9 @@ def _create_alert(patient, point, risk):
         message=message,
         location=point.point,
     )
+
+    from .notifications import send_alert_notification
+    send_alert_notification(alert)
 
 
 def _infer_alert_type(risk):
