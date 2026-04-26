@@ -29,3 +29,28 @@ class LearnedPlace(models.Model):
 
     def __str__(self):
         return f'LearnedPlace({self.patient.username}, {self.label}, visits={self.visit_count})'
+
+
+class TrainedModel(models.Model):
+    MODEL_TYPES = [
+        ('isolation_forest', 'Isolation Forest'),
+        ('threshold', 'Threshold Baseline'),
+    ]
+
+    patient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='trained_models',
+    )
+    model_type = models.CharField(max_length=30, choices=MODEL_TYPES)
+    model_path = models.CharField(max_length=255)
+    training_points_count = models.IntegerField()
+    training_date = models.DateTimeField(auto_now_add=True)
+    metrics = models.JSONField(default=dict)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ['-training_date']
+
+    def __str__(self):
+        return f'TrainedModel({self.patient.username}, {self.model_type}, active={self.is_active})'
