@@ -54,3 +54,18 @@ class TrainedModel(models.Model):
 
     def __str__(self):
         return f'TrainedModel({self.patient.username}, {self.model_type}, active={self.is_active})'
+
+
+class ZoneRiskCache(models.Model):
+    """Cached OSM risk score per ~100m grid cell."""
+    grid_lat = models.FloatField()
+    grid_lng = models.FloatField()
+    risk_score = models.FloatField()
+    poi_data = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['grid_lat', 'grid_lng']
+
+    def __str__(self):
+        return f'ZoneRisk({self.grid_lat:.4f},{self.grid_lng:.4f}) → {self.risk_score:.2f}'
