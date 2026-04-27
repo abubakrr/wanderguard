@@ -33,6 +33,7 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
+      - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     depends_on:
       db:
         condition: service_healthy
@@ -46,6 +47,8 @@ services:
     restart: unless-stopped
     command: celery -A wanderguard worker --loglevel=info --concurrency=2
     env_file: .env
+    volumes:
+      - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     depends_on:
       db:
         condition: service_healthy
