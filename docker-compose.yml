@@ -42,7 +42,7 @@ services:
     expose:
       - "8000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/docs/ || exit 1"]
+      test: ["CMD-SHELL", "curl -f -H 'Host: 204.168.137.203' http://localhost:8000/api/docs/ || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
