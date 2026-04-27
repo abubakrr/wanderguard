@@ -17,6 +17,34 @@ from .serializers import AlertSerializer, RiskScoreSerializer
 
 User = get_user_model()
 
+_DAY_NAMES = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+
+def _fmt_hour(h: float) -> str:
+    """Convert float hour (9.5) to 'HH:MM' string."""
+    hour = int(h)
+    minute = int(round((h - hour) * 60))
+    return f'{hour:02d}:{minute:02d}'
+
+
+def _serialize_learned_place(p) -> dict:
+    return {
+        'id': p.pk,
+        'label': p.label,
+        'lat': p.centroid.y,
+        'lng': p.centroid.x,
+        'radius_meters': p.radius_meters,
+        'visit_count': p.visit_count,
+        'visit_frequency': p.visit_count,          # alias used by Flutter
+        'avg_arrival_hour': p.avg_arrival_hour,
+        'avg_departure_hour': p.avg_departure_hour,
+        'avg_duration_minutes': p.avg_duration_minutes,
+        'visit_time_start': _fmt_hour(p.avg_arrival_hour),
+        'visit_time_end': _fmt_hour(p.avg_departure_hour),
+        'days_of_week': [_DAY_NAMES[d] for d in p.days_of_week if 0 <= d <= 6],
+        'today_status': None,   # future: compute from today's location data
+    }
+
 
 def _caregiver_patients(caregiver):
     return User.objects.filter(
@@ -179,20 +207,7 @@ class LearnedPlacesView(APIView):
 
         from ml_pipeline.models import LearnedPlace
         places = LearnedPlace.objects.filter(patient=patient)
-        data = [
-            {
-                'id': p.pk,
-                'label': p.label,
-                'lat': p.centroid.y,
-                'lng': p.centroid.x,
-                'radius_meters': p.radius_meters,
-                'visit_count': p.visit_count,
-                'avg_arrival_hour': p.avg_arrival_hour,
-                'avg_duration_minutes': p.avg_duration_minutes,
-                'days_of_week': p.days_of_week,
-            }
-            for p in places
-        ]
+        data = [_serialize_learned_place(p) for p in places]
         return Response(data)
 
 
