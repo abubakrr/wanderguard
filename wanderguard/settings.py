@@ -128,6 +128,11 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
 }
 
+# ── CSRF ──────────────────────────────────────────────────────────────────────
+CSRF_TRUSTED_ORIGINS = [
+    o for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o
+]
+
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # wide-open only in dev
 CORS_ALLOWED_ORIGINS = [
