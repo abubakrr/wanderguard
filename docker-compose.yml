@@ -41,6 +41,12 @@ services:
         condition: service_healthy
     expose:
       - "8000"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/schema/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   celery:
     build: .
@@ -68,7 +74,8 @@ services:
       - certbot_www:/var/www/certbot:ro
       - certbot_conf:/etc/letsencrypt:ro
     depends_on:
-      - web
+      web:
+        condition: service_healthy
 
   # One-shot container to issue / renew TLS certs via Let's Encrypt
   certbot:
